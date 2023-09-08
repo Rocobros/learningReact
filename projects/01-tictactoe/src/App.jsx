@@ -1,25 +1,32 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import './App.css'
 import { TURNS } from './constants.js'
 import { Square } from './components/Square'
 import { checkWinnerFrom } from './logic/board'
 import { WinnerModal } from './components/WinnerModal'
 import { checkEndGame } from './logic/board'
-
+import { saveGameStorage, resetGameStorage } from './logic/storage/index.js'
 
 function App() {
 
-  const [ board, setBoard ] = useState(Array(9).fill(null))
-  const [ turn, setTurn ] = useState(TURNS.X)
+  const [ board, setBoard ] = useState(() => {
+    const boardFromStorage = window.localStorage.getItem('board')
+    return boardFromStorage ? JSON.parse(boardFromStorage) :
+    Array(9).fill(null)
+  })
+  const [ turn, setTurn ] = useState(() => {
+    const turnFromStorage = window.localStorage.getItem('turn')
+    return turnFromStorage ?? TURNS.X
+  })
   const [ winner, setWinner ] = useState(null)
 
-  
 
   const resetGame = () => {
     setBoard(Array(9).fill(null))
     setTurn(TURNS.X)
     setWinner(null)
-  
+
+    resetGameStorage()
   }
 
   const updateBoard = (index) => {
@@ -32,6 +39,8 @@ function App() {
 
     const newTurn = turn === TURNS.X ? TURNS.O : TURNS.X
     setTurn(newTurn)
+
+    saveGameStorage(newBoard, newTurn)
 
     const newWinner = checkWinnerFrom(newBoard)
     if(newWinner) setWinner(newWinner)
@@ -47,14 +56,14 @@ function App() {
       <button onClick={resetGame}> Reset del juego</button>
       <section className='game'>
         {
-          board.map((_, index) => {
+          board.map((square, index) => {
             return (
               <Square
               updateBoard={updateBoard}
               key={index}
               index={index}
               >
-                {board[index]}
+                {square}
               </Square>
             )
           })
